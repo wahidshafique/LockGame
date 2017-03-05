@@ -2,11 +2,12 @@
 using UnityEngine;
 
 public class PickScript : MonoBehaviour {
+    private Rigidbody prb;//parents rig body
     private Rigidbody rb;
 
     public GameObject tensionWrench;
 
-    private bool gameover = false;
+    public bool gameover = false;
     private bool isBeingHit = false;
     private bool isBeingRotated = false;
     private bool cracked = false;
@@ -26,6 +27,7 @@ public class PickScript : MonoBehaviour {
     private GlowObject glowPick; //for debug
     private float angleThresh = 90.0f; //the parent game object can only rotate to these angles on X
     Vector3 v; //the final mouse pos
+    private MovieTexture movt;
 
     //define the gradients to when you hit the true "sweet spot" of the lock
     private struct Ranges {
@@ -43,20 +45,19 @@ public class PickScript : MonoBehaviour {
             JackPot = steps / 5;
         }
     }
-
     private Ranges ranges;
-
     //debug
-    bool toggle = false;
+    bool toggle = true;
 
     void Start() {
+        movt = ((MovieTexture)transform.root.GetComponentInChildren<Renderer>().material.mainTexture);
+
         ranges = new Ranges(stepCount);
         parentTrans = transform.parent;
         glowPick = GetComponentInChildren<GlowObject>();
-
+        prb = transform.root.GetComponent<Rigidbody>();
         rb = GetComponent<Rigidbody>();
 
-        //range = SweetSpotRange(0, 5);
         //this is just the pick (for changing colors, etc)
         pickObject = transform.GetChild(0).gameObject;
         por = pickObject.GetComponent<Renderer>();
@@ -100,6 +101,7 @@ public class PickScript : MonoBehaviour {
     void ResetLock() {
         canPick = false;
         Vector3 parentRot = parentTrans.localRotation.eulerAngles;
+        //print("parent rot " + parentRot);
         if (parentRot.x < 90) {
             parentTrans.RotateAround(parentTrans.position, -transform.right, 1f);
         } else {
@@ -122,7 +124,6 @@ public class PickScript : MonoBehaviour {
             angleDegs = -angleThresh;
         }
         this.transform.rotation = Quaternion.Euler(angleDegs, 0, 0);
-
         int floored = (int)Mathf.Floor(angleDegs);
         return floored;
     }
@@ -130,21 +131,26 @@ public class PickScript : MonoBehaviour {
     bool checkIfCracked(int pickPosition) {
         //see if you are within the random range to crack the lock
         int nPos = pickPosition - lowRange;
-        //print(nPos);
-        //print(nPos);
         if (nPos > 0 && nPos < ranges.FarOff) {
             lockTwistAmount = nPos * 4;
             por.material.color = Color.cyan;
-            //print("IN RANGE");
+            if (Scorer.currDiff == Difficulty.Diff.Easy) {
+                return true;
+            }
             if (nPos > ranges.Close && nPos < ranges.Within) {
                 lockTwistAmount = nPos;
                 por.material.color = Color.yellow;
                 print("jack pot is : " + ranges.JackPot);
+                if (Scorer.currDiff == Difficulty.Diff.Medium) {
+                    return true;
+                }
                 if (nPos == ranges.JackPot * 2) {
                     lockTwistAmount = 0;
                     print("CLICK!");
                     por.material.color = Color.red;
-                    return true;
+                    if (Scorer.currDiff == Difficulty.Diff.Hard) {
+                        return true;
+                    }
                 }
             }
         } else {
@@ -156,12 +162,33 @@ public class PickScript : MonoBehaviour {
     void LockCracked() {
         if (cracked) {
             print("WIN!");
+            gameover = true;
+            FindObjectOfType<Scorer>().WinGame();
+            StartCoroutine(WinnerRotate());
         } else {
             print("FAIL!");
-            //rb.useGravity = true;
-            //gameOver = true;
-            GameOver(gameover = true);
+            //StartCoroutine(BreakWait());
+            GameOver(true);
         }
+    }
+
+    IEnumerator WinnerRotate() {
+        while (true) {
+            print(transform.root.rotation.eulerAngles.z);
+            if (transform.root.rotation.eulerAngles.z < 180) {
+                transform.root.Rotate(0, 0, Mathf.Sin(50 * Time.deltaTime));
+                if (movt.isReadyToPlay && !movt.isPlaying) {
+                    movt.Play();
+                    movt.loop = true;
+                }
+            }
+            yield return null;
+        }
+    }
+
+    IEnumerator BreakWait() {
+        yield return new WaitForSeconds(1.0f);
+        GameOver(true);
     }
 
     void OnMouseDown() {
@@ -189,24 +216,51 @@ public class PickScript : MonoBehaviour {
         }
     }
 
-    void Wiggle(float speed) {
-        transform.position = new Vector3(transform.position.x * Mathf.Sin(Time.time * speed), transform.position.y, transform.position.z);
-    }
-
-    void GameOver(bool g) {
+    public bool GameOver(bool g) {
+        gameover = g;
         Scorer.pickNum--;
+        FindObjectOfType<Scorer>().CheckPicks();
         StartCoroutine(WaitForNextRound());
+        return gameover;
     }
 
     IEnumerator WaitForNextRound() {
         Vector3 resPos = transform.position;
+        GameObject instatiatable = this.gameObject;
+        print("waiting..");
+        rb.isKinematic = false;
         rb.useGravity = true;
         yield return new WaitForSeconds(3);
-        ResetLock();
-        isBeingRotated = false;
-        transform.position = resPos;
-        transform.rotation = Quaternion.identity;
-        rb.useGravity = false;
-        gameover = false;
+        if (Scorer.pickNum > 0) {
+            //createGhost(instatiatable, resPos, transform.rotation);
+            isBeingRotated = false;
+            transform.position = resPos;
+            transform.rotation = Quaternion.identity;
+            rb.isKinematic = true;
+            rb.useGravity = false;
+            gameover = false;
+        } else {
+            lostAllLives();
+
+        }
+    }
+
+    void createGhost(GameObject insG, Vector3 insPos, Quaternion insRot) {
+        Component[] comps = insG.GetComponents(typeof(Component));
+        foreach (Component i in comps) {
+            if (i.GetType() != typeof(Transform)) {
+                Destroy(i);
+            }
+        }
+        insG.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+        Instantiate(insG, insPos, insRot);
+    }
+
+    void lostAllLives() {
+
+        //this is a hard game over...
+        Vector3 presPos = transform.root.position;
+        prb.isKinematic = false;
+
     }
 }
