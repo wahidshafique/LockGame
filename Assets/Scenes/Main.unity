@@ -526,15 +526,15 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: b113b218504484e408b4906ea5b81f18, type: 3}
+  m_audioClip: {fileID: 8300000, guid: da917ba6c5b9db74fa090576dd1aabbd, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 0.132
   m_Pitch: 1
-  Loop: 1
+  Loop: 0
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
-  Priority: 128
+  Priority: 124
   DopplerLevel: 1
   MinDistance: 1
   MaxDistance: 500
@@ -967,6 +967,28 @@ Terrain:
   m_BakeLightProbesForTrees: 1
   m_ScaleInLightmap: 1
   m_LightmapParameters: {fileID: 15203, guid: 0000000000000000f000000000000000, type: 0}
+--- !u!84 &1216004423
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_Width: 1024
+  m_Height: 768
+  m_AntiAliasing: 2
+  m_DepthFormat: 2
+  m_ColorFormat: 0
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_TextureSettings:
+    m_FilterMode: 1
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapMode: 1
 --- !u!1 &1278873019
 GameObject:
   m_ObjectHideFlags: 0
@@ -1015,6 +1037,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tensionWrench: {fileID: 1831702327}
+  gameover: 0
   stepCount: 40
 --- !u!135 &1278873022
 SphereCollider:
@@ -1404,28 +1427,6 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 1411cafb8ec702541957a85180719650, type: 3}
   m_IsPrefabParent: 0
---- !u!84 &1575200151
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_Width: 1024
-  m_Height: 768
-  m_AntiAliasing: 2
-  m_DepthFormat: 2
-  m_ColorFormat: 0
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_TextureSettings:
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapMode: 1
 --- !u!1 &1663160178
 GameObject:
   m_ObjectHideFlags: 0
@@ -1662,7 +1663,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 1575200151}
+  m_TargetTexture: {fileID: 1216004423}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 0
